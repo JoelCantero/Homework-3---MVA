@@ -1,0 +1,33 @@
+---
+title: "Practice Clustering and Profiling"
+author: "Marc Mendez & Joel Cantero"
+date: "7 de abril de 2019"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(FactoMineR)
+library(mice)
+```
+
+## 1. Read the pre-processed data "Russet". Perform the Principal Components Analysis. Take the democracy index as supplementary variable, whereas the remaining ones are active and CUBA as supplementary individual (you can synthesize results of previous homework).
+
+```{r read-table}
+X <- read.table('Russet_ineqdata.txt', header=T, sep='\t', row.names=1)
+X$demo <- as.factor(X$demo)
+levels(X$demo) = c("Stable", "Instable", "Dictatorship")
+
+imputedX <- complete(mice(X))
+row.names(imputedX) <- row.names(X)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pca}
+pca <- FactoMineR::PCA(graph=T, imputedX, ncp=8, quali.sup=9)
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
