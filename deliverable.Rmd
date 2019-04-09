@@ -8,6 +8,10 @@ output: html_document
 ```{r setup, include=FALSE}
 library(FactoMineR)
 library(mice)
+library(ggplot2)
+library(dendextend)
+library(calibrate)
+library(factoextra)
 ```
 
 ## 1. Read the pre-processed data "Russet". Perform the Principal Components Analysis. Take the democracy index as supplementary variable, whereas the remaining ones are active and CUBA as supplementary individual (you can synthesize results of previous homework).
@@ -21,13 +25,86 @@ imputedX <- complete(mice(X))
 row.names(imputedX) <- row.names(X)
 ```
 
-## Including Plots
-
-You can also embed plots, for example:
-
+Now, we are going to call PCA FactoMineR function and we are going to indicate Cuba as a supplementary individual (ind.sup = 11 (Cuba)), democracy index as a supplemtary variable (quali.sup=9 (demo))
 ```{r pca}
-pca <- FactoMineR::PCA(graph=T, imputedX, ncp=8, quali.sup=9)
+pca <- FactoMineR::PCA(graph=T, imputedX, ncp=8, quali.sup=9, ind.sup = 11)
 
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+## 2. Interpret the first two obtained factors.
+
+
+```{r interpret two-obtained-factors}
+eig = as.data.frame(pca$eig)
+eigenv = eig$eigenvalue
+
+```
+
+## 3. Decide the number of significant dimensions that you retain (by subtracting the average eigenvalue and represent the new obtained eigenvalues in a new screeplot).
+
+```{r interpret two-obtained-factors}
+screen_frame <- data.frame(Number = seq(1, length(eigenv)), Value = eigenv)
+plot(screen_frame, main="Eigen values screeplot",
+     xlab="Dimension", ylab="Info. retained" , ylim=c(0, max(eigenv) + 0.5), xlim=c(1, length(eigenv) + 0.5)) 
+lines(screen_frame$Value, col="blue")
+textxy(screen_frame$Number, screen_frame$Value, round(screen_frame$Value, 2), cex=1.1)
+```
+
+With the obtained screeplot and applying the last ebow rule we can select the first three dimensions.
+
+## 4. Perform a hierarchical clustering with the significant factors, decide the number of final classes to obtain and perform a consolidation operation of the clustering.
+
+As we mentioned before, we are going to select three significant factors. 
+
+```{r hierarchical clustering}
+nd = 3  # number of dimensions
+Psi <- pca$ind$coord[, 1:nd]
+dist_matrix = dist(Psi)
+
+cluster <- hclust(dist_matrix, method='ward.D2')
+plot(cluster)
+barplot(cluster$height)
+```
+
+Seeing the dendogram and the barplot, we can check that there are 4 different heights in the plot. So we select the first 4 classes.
+
+```{r clusters}
+clusters = 4
+c1 <- cutree(cluster, clusters)
+plot(Psi,type="n",main="Clustering of countries in 4 classes")
+text(Psi,col=c1,labels=rownames(Psi),cex = 0.6)
+abline(h=0,v=0,col="gray")
+legend("bottomright",c("Class 1","Class 2","Class 3","Class 4"),pch=20,col=c(1:4))
+
+c2 <- cutree(cluster, clusters)
+colors = hsv(c(0.3, 0.75, 0.95, 0.5), 1, 0.8)
+dend <- as.dendrogram(cluster)
+dend <- dend %>%
+    color_branches(k = clusters, col=colors) %>%
+    set("branches_lwd", c(2,1,2)) %>%
+    set("branches_lty", c(1,2,1))
+
+plot(dend); (cdg <- aggregate(Psi,list(c2),mean)[,2:(nd+1)])
+k_def <- kmeans(Psi,centers=cdg)
+```
+
+## 5 Compute the Calinski-Harabassz index and compare before and after the consolidation step.
+
+## 6. Using the function catdes interpret and name the obtained clusters and represent them in the first factorial display.
+```{r catdes}
+clusters_interpretation <- catdes(cbind(as.factor(k_def$cluster), imputedX[-11,]),1, 0.05)
+plot(clusters_interpretation)
+plot(pca$ind$coord, col=k_def$cluster)
+```
+
+
+We can intepret the results more easily by using the plot of the catdes, which shows which variables are under or over represented in our clusters, and to which deegre are they over or under represented.
+
+It seems that the first cluster has quite a bit of overrepresented data (shown in red), this is true no matter how many clusters do we try, which seems to imply that this is an issue which can not be fixed, still the other clusters seem to have a good overall representation of the variables. It is important to note that we can not look at the value of *p-value* due to all of them being lower than *0.05*, as such it is better if we look at *v.test*.
+
+## 7. Which is the most plausible profile for CUBA? Why?
+```{r cuba-profile}
+distance <- apply(k_def$centers, 1, function(i) (sum((pca$ind.sup$coord[1:nd] - i)^2)))
+max.col(-t(distance))
+```
+We have to calculate the equilidan distance between the centroids an the points. The cluster which is more close to is cluster number 3.
