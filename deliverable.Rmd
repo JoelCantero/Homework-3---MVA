@@ -2,9 +2,7 @@
 title: "Practice Clustering and Profiling"
 author: "Marc Mendez & Joel Cantero"
 date: "7 de abril de 2019"
-output:
-  pdf_document: default
-  html_document: default
+output: html_document
 ---
 
 ```{r setup, include=FALSE}
@@ -20,21 +18,22 @@ library(fpc)
 ## 1. Read the pre-processed data "Russet". Perform the Principal Components Analysis. Take the democracy index as supplementary variable, whereas the remaining ones are active and CUBA as supplementary individual (you can synthesize results of previous homework).
 
 First of all, we are going to read the data and pre-process it correctly. We need to set demo as a factor and can input the levels but this won't have any impact. This steps are the same we made on last homework.
+
 The once data is properly set, we need to input the missing values. For doing that we will use mice function.
+
 ```{r read-table}
 X <- read.table('Russet_ineqdata.txt', header=T, sep='\t', row.names=1)
 X$demo <- as.factor(X$demo)
 levels(X$demo) = c("Stable", "Instable", "Dictatorship")
-
 imputedX <- complete(mice(X))
 row.names(imputedX) <- row.names(X)
 ```
 
 As known from the other practices, CUBA is an outlier so we will consider this when doing the PCA.
 Now, we are going to call PCA FactoMineR function and we are going to indicate Cuba as a supplementary individual (ind.sup = 11 (Cuba)), democracy index as a supplemtary variable (quali.sup=9 (demo))
+
 ```{r pca}
 pca <- FactoMineR::PCA(graph=T, imputedX, ncp=8, quali.sup=9, ind.sup = 11)
-
 ```
 
 ## 2. Interpret the first two obtained factors.
@@ -43,9 +42,13 @@ pca <- FactoMineR::PCA(graph=T, imputedX, ncp=8, quali.sup=9, ind.sup = 11)
 ```{r interpret two-obtained-factors}
 eig = as.data.frame(pca$eig)
 eigenv = eig$eigenvalue
-
-
+eigenv
+eig
 ```
+
+The first dimension tries to define the variance of those countries that are farmers FARM with a negative GNPR per capita, like Colombia.
+
+The second one takes GINI positively and LABO negatively. That mean that are countries with less people than average working and that the inequalities of capital in the population are high.
 
 ## 3. Decide the number of significant dimensions that you retain (by subtracting the average eigenvalue and represent the new obtained eigenvalues in a new screeplot).
 
@@ -97,7 +100,9 @@ k_def <- kmeans(Psi,centers=cdg)
 ```
 
 ## 5 Compute the Calinski-Harabassz index and compare before and after the consolidation step.
+
 Before making the consolidation step we obtaing a Calinski-Harabassz index of 28.
+
 ```{r calinhara-Before}
 calinhara(Psi,c2)
 ```
@@ -114,13 +119,14 @@ plot(pca$ind$coord, col=k_def$cluster)
 ```
 
 
-We can intepret the results more easily by using the plot of the catdes, which shows which variables are under or over represented in our clusters, and to which deegre are they over or under represented.
+We can intepret the outcomes all the more effectively by utilizing the plot of the catdes, which demonstrates which factors are under or over spoken to in our clusters, and to which deegre are they over or under represented.
 
-It seems that the first cluster has quite a bit of overrepresented data (shown in red), this is true no matter how many clusters do we try, which seems to imply that this is an issue which can not be fixed, still the other clusters seem to have a good overall representation of the variables. It is important to note that we can not look at the value of *p-value* due to all of them being lower than *0.05*, as such it is better if we look at *v.test*.
+It appears that the main cluster has a considerable amount of overrepresented information (appeared red), this is genuine regardless of what number of groups do we attempt, which appears to infer this is an issue which can not be fixed, still different groups appear to have a decent generally speaking portrayal of the factors. We can not look at the value of *p-value* due to all of them being lower than *0.05*, it is better if we look at *v.test*.
 
 ## 7. Which is the most plausible profile for CUBA? Why?
 ```{r cuba-profile}
 distance <- apply(k_def$centers, 1, function(i) (sum((pca$ind.sup$coord[1:nd] - i)^2)))
 max.col(-t(distance))
 ```
+
 We have to calculate the equilidan distance between the centroids an the points. The cluster which is more close to is cluster number 3.
