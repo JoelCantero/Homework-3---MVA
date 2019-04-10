@@ -14,6 +14,7 @@ library(ggplot2)
 library(dendextend)
 library(calibrate)
 library(factoextra)
+library(fpc)
 ```
 
 ## 1. Read the pre-processed data "Russet". Perform the Principal Components Analysis. Take the democracy index as supplementary variable, whereas the remaining ones are active and CUBA as supplementary individual (you can synthesize results of previous homework).
@@ -96,6 +97,14 @@ k_def <- kmeans(Psi,centers=cdg)
 ```
 
 ## 5 Compute the Calinski-Harabassz index and compare before and after the consolidation step.
+Before making the consolidation step we obtaing a Calinski-Harabassz index of 28.
+```{r calinhara-Before}
+calinhara(Psi,c2)
+```
+After making all the consolidation, we obtain almost 30 which makes sense because kmeans should make this index bigger.
+```{r calinhara-After}
+calinhara(Psi,k_def$cluster)
+```
 
 ## 6. Using the function catdes interpret and name the obtained clusters and represent them in the first factorial display.
 ```{r catdes}
