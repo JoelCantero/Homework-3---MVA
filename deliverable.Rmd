@@ -2,7 +2,9 @@
 title: "Practice Clustering and Profiling"
 author: "Marc Mendez & Joel Cantero"
 date: "7 de abril de 2019"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -21,7 +23,7 @@ First of all, we are going to read the data and pre-process it correctly. We nee
 
 The once data is properly set, we need to input the missing values. For doing that we will use mice function.
 
-```{r read-table}
+```{r read-table,  results = 'hide'}
 X <- read.table('Russet_ineqdata.txt', header=T, sep='\t', row.names=1)
 X$demo <- as.factor(X$demo)
 levels(X$demo) = c("Stable", "Instable", "Dictatorship")
@@ -52,7 +54,7 @@ The second one takes GINI positively and LABO negatively. That mean that are cou
 
 ## 3. Decide the number of significant dimensions that you retain (by subtracting the average eigenvalue and represent the new obtained eigenvalues in a new screeplot).
 
-```{r interpret two-obtained-factors2}
+```{r interpret two-obtained-factors2,echo= FALSE, message = FALSE}
 screen_frame <- data.frame(Number = seq(1, length(eigenv)), Value = eigenv)
 plot(screen_frame, main="Eigen values screeplot",
      xlab="Dimension", ylab="Info. retained" , ylim=c(0, max(eigenv) + 0.5), xlim=c(1, length(eigenv) + 0.5))  +
@@ -79,7 +81,7 @@ barplot(cluster$height)
 
 Seeing the dendogram and the barplot, we can check that there are 4 different heights in the plot. So we select the first 4 classes.
 
-```{r clusters}
+```{r clusters, echo = FALSE}
 clusters = 4
 c1 <- cutree(cluster, clusters)
 plot(Psi,type="n",main="Clustering of countries in 4 classes")
@@ -101,13 +103,13 @@ k_def <- kmeans(Psi,centers=cdg)
 
 ## 5 Compute the Calinski-Harabassz index and compare before and after the consolidation step.
 
-Before making the consolidation step we obtaing a Calinski-Harabassz index of 28.
+Before making the consolidation step we obtaing a Calinski-Harabassz index of:
 
-```{r calinhara-Before}
+```{r calinhara-Before, echo = FALSE}
 calinhara(Psi,c2)
 ```
 After making all the consolidation, we obtain almost 30 which makes sense because kmeans should make this index bigger.
-```{r calinhara-After}
+```{r calinhara-After, echo = FALSE}
 calinhara(Psi,k_def$cluster)
 ```
 
@@ -124,7 +126,7 @@ We can intepret the outcomes all the more effectively by utilizing the plot of t
 It appears that the main cluster has a considerable amount of overrepresented information (appeared red), this is genuine regardless of what number of groups do we attempt, which appears to infer this is an issue which can not be fixed, still different groups appear to have a decent generally speaking portrayal of the factors. We can not look at the value of *p-value* due to all of them being lower than *0.05*, it is better if we look at *v.test*.
 
 ## 7. Which is the most plausible profile for CUBA? Why?
-```{r cuba-profile}
+```{r cuba-profile , echo = FALSE}
 distance <- apply(k_def$centers, 1, function(i) (sum((pca$ind.sup$coord[1:nd] - i)^2)))
 max.col(-t(distance))
 ```
