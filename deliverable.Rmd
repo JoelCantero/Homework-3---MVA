@@ -2,7 +2,9 @@
 title: "Practice Clustering and Profiling"
 author: "Marc Mendez & Joel Cantero"
 date: "7 de abril de 2019"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -16,6 +18,8 @@ library(factoextra)
 
 ## 1. Read the pre-processed data "Russet". Perform the Principal Components Analysis. Take the democracy index as supplementary variable, whereas the remaining ones are active and CUBA as supplementary individual (you can synthesize results of previous homework).
 
+First of all, we are going to read the data and pre-process it correctly. We need to set demo as a factor and can input the levels but this won't have any impact. This steps are the same we made on last homework.
+The once data is properly set, we need to input the missing values. For doing that we will use mice function.
 ```{r read-table}
 X <- read.table('Russet_ineqdata.txt', header=T, sep='\t', row.names=1)
 X$demo <- as.factor(X$demo)
@@ -25,6 +29,7 @@ imputedX <- complete(mice(X))
 row.names(imputedX) <- row.names(X)
 ```
 
+As known from the other practices, CUBA is an outlier so we will consider this when doing the PCA.
 Now, we are going to call PCA FactoMineR function and we are going to indicate Cuba as a supplementary individual (ind.sup = 11 (Cuba)), democracy index as a supplemtary variable (quali.sup=9 (demo))
 ```{r pca}
 pca <- FactoMineR::PCA(graph=T, imputedX, ncp=8, quali.sup=9, ind.sup = 11)
@@ -38,19 +43,21 @@ pca <- FactoMineR::PCA(graph=T, imputedX, ncp=8, quali.sup=9, ind.sup = 11)
 eig = as.data.frame(pca$eig)
 eigenv = eig$eigenvalue
 
+
 ```
 
 ## 3. Decide the number of significant dimensions that you retain (by subtracting the average eigenvalue and represent the new obtained eigenvalues in a new screeplot).
 
-```{r interpret two-obtained-factors}
+```{r interpret two-obtained-factors2}
 screen_frame <- data.frame(Number = seq(1, length(eigenv)), Value = eigenv)
 plot(screen_frame, main="Eigen values screeplot",
-     xlab="Dimension", ylab="Info. retained" , ylim=c(0, max(eigenv) + 0.5), xlim=c(1, length(eigenv) + 0.5)) 
+     xlab="Dimension", ylab="Info. retained" , ylim=c(0, max(eigenv) + 0.5), xlim=c(1, length(eigenv) + 0.5))  +
+     abline(h = 1, col = 'red')
 lines(screen_frame$Value, col="blue")
 textxy(screen_frame$Number, screen_frame$Value, round(screen_frame$Value, 2), cex=1.1)
 ```
 
-With the obtained screeplot and applying the last ebow rule we can select the first three dimensions.
+With the obtained screeplot and applying the last ebow rule we can select the first three dimensions as significant ones. And if we check the eigen variable there is a column with the percentatges of each component. With this three variables, the percentatge of information that can be explained is 70.68817%.
 
 ## 4. Perform a hierarchical clustering with the significant factors, decide the number of final classes to obtain and perform a consolidation operation of the clustering.
 
